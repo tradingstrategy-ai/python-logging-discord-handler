@@ -67,6 +67,8 @@ logger.debug("A debug message - usually not that interesting")
 logger.error("Very nasty error messgae!")
 ```
 
+[Find more examples in the examples.py source code](https://github.com/tradingstrategy-ai/python-logging-discord-handler/blob/master/discord_logging/examples.py).
+
 # How to get Discord webhook URL
 
 1. Go to *Edit channel* (gear) in Discord
@@ -119,6 +121,7 @@ The log message are converted to Discord embeds with the following logic
 - Single line log messsages are converted to embed titles
 - For multi line log messages, the first line is the embed title and the following lines are the embed description
 - Long lines or long messages cannot be convert to embeds, instead they use [Discord Markdown code formattiong](https://support.discord.com/hc/en-us/articles/210298617-Markdown-Text-101-Chat-Formatting-Bold-Italic-Underline-) to preserve the readability of the output
+- A special `message_break_char` can be assigned to manually split long messages 
 
 # Colours and emoticons
 
@@ -130,9 +133,9 @@ Logging messages can be decorated with colours and emoticons.
 Here are the defaults:
 
 ```python
-# Colors as hexacimal, converted int
+#: The default log level colors as hexacimal, converted int
 DEFAULT_COLOURS = {
-    None: 2040357,
+    None: 2040357,  # Unknown log level
     logging.CRITICAL: 14362664,  # Red
     logging.ERROR: 14362664,  # Red
     logging.WARNING: 16497928,  # Yellow
@@ -141,8 +144,9 @@ DEFAULT_COLOURS = {
 }
 
 
+#: The default log emojis as
 DEFAULT_EMOJIS = {
-    None: "",
+    None: "",  # Unknown log level
     logging.CRITICAL: "🆘",
     logging.ERROR: "❌",
     logging.WARNING: "⚠️",

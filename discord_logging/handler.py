@@ -7,7 +7,7 @@ from discord_webhook import DiscordEmbed, DiscordWebhook
 
 #: The default log level colors as hexacimal, converted int
 DEFAULT_COLOURS = {
-    None: 2040357,
+    None: 2040357,  # Unknown log level
     logging.CRITICAL: 14362664,  # Red
     logging.ERROR: 14362664,  # Red
     logging.WARNING: 16497928,  # Yellow
@@ -18,7 +18,7 @@ DEFAULT_COLOURS = {
 
 #: The default log emojis as
 DEFAULT_EMOJIS = {
-    None: "",
+    None: "",  # Unknown log level
     logging.CRITICAL: "🆘",
     logging.ERROR: "❌",
     logging.WARNING: "⚠️",
