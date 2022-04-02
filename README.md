@@ -25,6 +25,10 @@ Redirect your Python log output to Discord using [Python logging subsystem](http
 - Documentation
 - Special handling for long log messages like tracebacks to deal with Discord's 2000 character max message length
 
+# Requirements
+
+- Python 3.8+
+
 # Usage
 
 This example logs both to Discord and standard output. 
@@ -65,10 +69,43 @@ logger.error("Very nasty error messgae!")
 
 # How to get Discord webhook URL
 
-1. Go to channel settings in Discord
-2. Choose Integration
-3. Create new webhook
+1. Go to *Edit channel* (gear) in Discord
+2. Choose *Integrations*
+3. Choose *View webhooks* -> *New*
 4. Copy URL
+
+## Webhook URL security
+
+It is recommend that you store the webhook URL outside your source code to avoid damage in hacks or similar security incidents.
+
+In Linux/macOS shell you can do on the command line:
+
+```shell
+export DISCORD_TEST_WEBHOOK_URL=<your webhook URL here>
+```
+
+For long term configuration, you can create a file storing environment variables outside your source code tree, like in your home directory. Store the `export` commands there.
+
+```shell
+# Text editor for a secrets.env file in your home directory on Linux
+nano ~/secrets.env  
+```
+
+In your Linux shell session, you can then read this file and make environment variables effective using [source](https://superuser.com/a/46149) command in your shell:
+
+```shell
+# Reads secrets.env and executes all commands there and makes them effective
+# in the current shell session
+source ~/secrets.env
+```
+
+Then you can read the environment variable in your Python code: 
+
+```python
+import os
+
+webhook_url = os.environ["DISCORD_TEST_WEBHOOK_URL"]
+```
 
 # Discord limitations
 
@@ -129,7 +166,7 @@ Inspect how logging output looks in Discord.
 ```shell
 poetry install -E docs 
 export DISCORD_TEST_WEBHOOK_URL=...
-python discord_logging/handler.py
+python discord_logging/examples.py
 ```
 
 This will dump some messages to your Discord.

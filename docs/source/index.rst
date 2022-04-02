@@ -3,12 +3,12 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Python logging handler for Discord's documentation!
-==============================================================
+Python logging handler for Discord documentation
+================================================
 
 * `README <https://github.com/tradingstrategy-ai/python-logging-discord-handler>`_
 * `Github <https://github.com/tradingstrategy-ai/python-logging-discord-handler>`_
-* `Discord support <https://tradingstrategy.ai/community>`_
+* `Community discussion in Discord (see #troubleshooting channel) <https://tradingstrategy.ai/community>`_
 
 .. toctree::
    :maxdepth: 2
@@ -19,6 +19,7 @@ API documentation
 
 .. autosummary::
    :toctree: _autosummary
+   :template: custom-module-template.rst
    :recursive:
 
    discord_logging.handler

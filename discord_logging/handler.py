@@ -1,12 +1,13 @@
-"""Discord logging handler."""
+"""Python logging support for Discord."""
 import logging
 import os
 import sys
 import textwrap
+from typing import Optional
 
 from discord_webhook import DiscordEmbed, DiscordWebhook
 
-# Colors as hexacimal, converted int
+#: The default log level colors as hexacimal, converted int
 DEFAULT_COLOURS = {
     None: 2040357,
     logging.CRITICAL: 14362664,  # Red
@@ -17,6 +18,7 @@ DEFAULT_COLOURS = {
 }
 
 
+#: The default log emojis as
 DEFAULT_EMOJIS = {
     None: "",
     logging.CRITICAL: "🆘",
@@ -28,7 +30,8 @@ DEFAULT_EMOJIS = {
 
 
 class DiscordHandler(logging.Handler):
-    """
+    """Output logs to Discord chat.
+
     A handler class which writes logging records, appropriately formatted,
     to a Discord Server using webhooks.
     """
@@ -38,9 +41,22 @@ class DiscordHandler(logging.Handler):
                  webhook_url: str,
                  colours=DEFAULT_COLOURS,
                  emojis=DEFAULT_EMOJIS,
-                 avatar_url=None,
-                 rate_limit_retry=True,
-                 embed_line_wrap_threshold=60):
+                 avatar_url: Optional[str]=None,
+                 rate_limit_retry: bool=True,
+                 embed_line_wrap_threshold: int=60):
+        """
+
+        :param service_name: Shows at the bot username in Discord.
+        :param webhook_url: Channel webhook URL. See README for details.
+        :param colours: Log level to Discord embed color mapping
+        :param emojis:
+            Log level to emoticon decoration mapping.
+            If present this is appended as a prefix to the first line of the log.
+        :param avatar_url: Bot profile picture
+        :param rate_limit_retry: Try to recover when Discord server tells us to slow down
+        :param embed_line_wrap_threshold:
+            How many characters a text line can contain until we go to "long line" output format.
+        """
 
         logging.Handler.__init__(self)
         self.webhook_url = webhook_url
@@ -53,7 +69,10 @@ class DiscordHandler(logging.Handler):
         self.embed_line_wrap_threshold = embed_line_wrap_threshold
 
     def should_format_as_code_block(self, record: logging.LogRecord, msg: str) -> bool:
-        """Figure out whether we want to use code block formatting in Discord"""
+        """Figure out whether we want to use code block formatting in Discord.
+
+        Check for new lines and long lines in the log message.
+        """
 
         if "\n" not in msg:
             if len(msg) > self.embed_line_wrap_threshold:
@@ -79,7 +98,8 @@ class DiscordHandler(logging.Handler):
 
         if self.reentry_barrier:
             # Don't let Discord and request internals to cause logging
-            # and thus infinite recursion
+            # and thus infinite recursion. This is because the underlying
+            # requests package itself uses logging.
             return
 
         self.reentry_barrier = True
@@ -101,6 +121,9 @@ class DiscordHandler(logging.Handler):
 
                 colour = self.colours.get(record.levelno) or self.colours[None]
                 emoji = self.emojis.get(record.levelno)
+                if emoji:
+                    # Add some space before the next char
+                    emoji += " "
 
                 # discord.content = msg
                 if self.should_format_as_code_block(record, msg):
@@ -117,29 +140,15 @@ class DiscordHandler(logging.Handler):
                     if max_line_length > self.embed_line_wrap_threshold:
                         # msg_with_bold = f"**{first}**\n```{clipped}```"
                         clipped_msg = self.clip_content(msg)
-                        discord.content = f"```{clipped_msg}```"
+                        discord.content = f"```{emoji}{clipped_msg}```"
                     else:
-                        embed = DiscordEmbed(title=first, description=clipped, color=colour)
+                        embed = DiscordEmbed(title=f"{emoji}{first}", description=clipped, color=colour)
                         discord.add_embed(embed)
 
-                    # Embeds will wrap lines quite early
-                    # if True:
-                    #     clipped = self.clip_content(remainder)
-                    #     content = f"```\n{clipped}\n```"
-                    #     if emoji:
-                    #         title = f"{emoji} {first}"
-                    #     else:
-                    #         title = first
-                    #
-                    #     embed = DiscordEmbed(title=title, description=content, color=colour)
-                    #     discord.add_embed(embed)
-                    # else:
-                    #     # Too long lines, we cannot do fancy formatting
-                    #     discord.content = f"{msg}"
                 else:
                     # discord.content = content
                     if emoji:
-                        title = f"{emoji} {msg}"
+                        title = f"{emoji}{msg}"
                     else:
                         title = msg
                     embed = DiscordEmbed(title=title, color=colour)
@@ -158,66 +167,3 @@ class DiscordHandler(logging.Handler):
             self.reentry_barrier = False
 
 
-if __name__ == "__main__":
-    # Run a manual test
-    webhook_url = os.environ["DISCORD_TEST_WEBHOOK_URL"]
-    logger = logging.getLogger()
-
-    stream_format = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-    discord_format = logging.Formatter("%(message)s")
-
-    discord_handler = DiscordHandler("My server log example", webhook_url, emojis={}, avatar_url="https://i0.wp.com/www.theterminatorfans.com/wp-content/uploads/2012/09/the-terminator3.jpg?resize=900%2C450&ssl=1")
-    #discord_handler = DiscordHandler("Happy Bot", webhook_url, emojis={})
-    discord_handler.setFormatter(discord_format)
-    stream_handler = logging.StreamHandler()
-    stream_handler.setFormatter(stream_format)
-
-    # Add the handlers to the Logger
-    logger.addHandler(discord_handler)
-    logger.addHandler(stream_handler)
-    logger.setLevel(logging.DEBUG)
-
-    logger.info("Long line of text Long line of text Long line of text Long line of text Long line of text  Long line of text Long line of text")
-
-    # Test logging output
-    # https://docs.python.org/3.9/library/textwrap.html#textwrap.dedent
-    detent_text = textwrap.dedent("""\
-    Test title
-    
-    🌲 Item 1     $200,00
-    🔻 Item 2     $12,123
-    """)
-    logger.info(detent_text)
-
-    long_lines_text = textwrap.dedent("""\
-    A test with long lines in the content
-    
-    🌲 Item 1     $200,00 $200,00 $200,00 $200,00 $200,00 $200,00 $200,00 $200,00 $200,00 $200,00 $200,00 $200,00 $200,00 $200,00 $200,00 $200,00
-    🔻 Item 2     $12,123 $12,123 $12,123 $12,123 $12,123 $12,123 $12,123 $12,123 $12,123 $12,123 $12,123 $12,123 $12,123 $12,123 $12,123 $12,123 $12,123 $12,123
-    
-            https://tradingstrategy.ai/trading-view
-            https://tradingstrategy.ai/blog 
-    """)
-    logger.info(long_lines_text)
-
-    logger.info("Line of text")
-
-    logger.debug("Debug message %d %d", 1, 2)
-    logger.info("Info message")
-    logger.warning("Warning message")
-    logger.error("Error message")
-
-    logger.info("Short info message with a link https://tradingstrategy.ai")
-
-    try:
-        raise RuntimeError("A bloody exception")
-    except Exception as e:
-        logger.exception(e)
-
-    # Switch to a handler with emojis
-    discord_handler_with_emojis = DiscordHandler("My server log example", webhook_url)
-    logger.removeHandler(discord_handler)
-    logger.addHandler(discord_handler_with_emojis)
-    logger.error("Error output with emojis")
-    logger.warning("Warning output with emojis")
-    logger.info("Info output with emojis")
