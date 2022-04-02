@@ -1,3 +1,9 @@
+[![PyPI version](https://badge.fury.io/py/python-logging-discord-handler.svg)](https://badge.fury.io/py/python-logging-discord-handler)
+
+[![Automated test suite](https://github.com/tradingstrategy-ai/python-logging-discord-handler/actions/workflows/tests.yml/badge.svg)](https://github.com/tradingstrategy-ai/python-logging-discord-handler/actions/workflows/tests.yml)
+
+[![Documentation Status](https://readthedocs.org/projects/python-logging-discord-handler/badge/?version=latest)](https://python-logging-discord-handler.readthedocs.io/en/latest/?badge=latest)
+
 # Python logging handler for Discord
 
 Redirect your Python log output to Discord using [Python logging subsystem](https://docs.python.org/3/howto/logging.html) and [Discord Webhook library](https://github.com/lovvskillz/python-discord-webhook).
