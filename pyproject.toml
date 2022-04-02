@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "python-logging-discord-handler"
+version = "0.1.0"
+description = "Direct Python log output to Discord"
+authors = ["Mikko Ohtamaa <mikko@opensourcehacker.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+discord-webhook = "^0.15.0"
+Sphinx = {version = "^4.4.0", optional = true}
+sphinx-rtd-theme = {version = "^1.0.0", optional = true}
+sphinx-sitemap = {version = "^2.2.0", optional = true}
+sphinx-autodoc-typehints = {version = "^1.16.0", extras = ["docs"], optional = true}
+
+[tool.poetry.dev-dependencies]
+
+
+# See discussion https://github.com/python-poetry/poetry/issues/3348#issuecomment-726534462
+[tool.poetry.extras]
+docs = ["Sphinx", "sphinx-rtd-theme", "sphinx-sitemap", "sphinx-autodoc-typehints"]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
