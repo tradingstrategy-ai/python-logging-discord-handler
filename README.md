@@ -8,6 +8,8 @@
 
 Redirect your Python log output to Discord using [Python logging subsystem](https://docs.python.org/3/howto/logging.html) and [Discord Webhook library](https://github.com/lovvskillz/python-discord-webhook).
 
+![Example screenshot](https://raw.githubusercontent.com/tradingstrategy-ai/python-logging-discord-handler/master/docs/source/_static/example_screenshot.png)
+
 # Use cases
 
 - Get notified on server-side errors
@@ -17,7 +19,7 @@ Redirect your Python log output to Discord using [Python logging subsystem](http
 # Features
 
 - Minimum or no changes to a Python application needed
-- Optional color coding of messages using embeds
+- Optional color coding of messages using [Discord embeds](https://discordjs.guide/popular-topics/embeds.html#embed-preview)
 - Optional emoticons on messages using Unicode
 - Discord rate limiting friendly for burst of logs
 - Documentation
@@ -32,8 +34,10 @@ First you need to
 ```python
 import logging
 
+from discord_logging.handler import DiscordHandler
+
 # See instructions below how to get a Webhook URL
-webhook_url = os.environ["DISCORD_TEST_WEBHOOK_URL"]
+webhook_url = # ...
 logger = logging.getLogger()
 
 stream_format = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -42,7 +46,6 @@ discord_format = logging.Formatter("%(message)s")
 discord_handler = DiscordHandler(
     "Hello World Bot", 
     webhook_url, 
-    emojis={}, 
     avatar_url="https://i0.wp.com/www.theterminatorfans.com/wp-content/uploads/2012/09/the-terminator3.jpg?resize=900%2C450&ssl=1")
 
 #discord_handler = DiscordHandler("Happy Bot", webhook_url, emojis={})
@@ -66,6 +69,52 @@ logger.error("Very nasty error messgae!")
 2. Choose Integration
 3. Create new webhook
 4. Copy URL
+
+# Discord limitations
+
+- Max 2000 characters per message. See API documentation how to work around this limitation with different options. By default the bottom most lines of the log message, like a traceback, are shown.
+- Discord embeds, those that give you a logging level color bar on the left, have very hard time to deal with long lines. Embeds are disabled for long lines by default.
+
+## Log output formatting logic
+
+The log message are converted to Discord embeds with the following logic
+
+- Single line log messsages are converted to embed titles
+- For multi line log messages, the first line is the embed title and the following lines are the embed description
+- Long lines or long messages cannot be convert to embeds, instead they use [Discord Markdown code formattiong](https://support.discord.com/hc/en-us/articles/210298617-Markdown-Text-101-Chat-Formatting-Bold-Italic-Underline-) to preserve the readability of the output
+
+# Colours and emoticons
+
+Logging messages can be decorated with colours and emoticons.
+
+![Emoji screenshot](https://raw.githubusercontent.com/tradingstrategy-ai/python-logging-discord-handler/master/docs/source/_static/emoji_example.png)
+
+
+Here are the defaults:
+
+```python
+# Colors as hexacimal, converted int
+DEFAULT_COLOURS = {
+    None: 2040357,
+    logging.CRITICAL: 14362664,  # Red
+    logging.ERROR: 14362664,  # Red
+    logging.WARNING: 16497928,  # Yellow
+    logging.INFO: 2196944,  # Blue
+    logging.DEBUG: 8947848,  # Gray
+}
+
+
+DEFAULT_EMOJIS = {
+    None: "",
+    logging.CRITICAL: "🆘",
+    logging.ERROR: "❌",
+    logging.WARNING: "⚠️",
+    logging.INFO: "",
+    logging.DEBUG: "",
+}
+```
+
+Emoticons are disabled by default as they often make the output a bit too colourful and harder to read.
 
 # Testing and development
 

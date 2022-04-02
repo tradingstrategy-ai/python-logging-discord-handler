@@ -1,12 +1,4 @@
-"""Discord logging handler.
-
-Based on the orignal work by Copyright (c) 2019 Trayser Cassa (MIT licensed)
-
-See also other inspirations and sources
-- https://github.com/TrayserCassa/DiscordHandler/blob/master/discord_handler/DiscordHandler.py
-- https://pypi.org/project/discord-webhook/
-- https://github.com/chinnichaitanya/python-discord-logger/blob/master/discord_logger/message_logger.py
-"""
+"""Discord logging handler."""
 import logging
 import os
 import sys
@@ -14,7 +6,7 @@ import textwrap
 
 from discord_webhook import DiscordEmbed, DiscordWebhook
 
-
+# Colors as hexacimal, converted int
 DEFAULT_COLOURS = {
     None: 2040357,
     logging.CRITICAL: 14362664,  # Red
@@ -26,12 +18,12 @@ DEFAULT_COLOURS = {
 
 
 DEFAULT_EMOJIS = {
-    None: ":loudspeaker:",
-    logging.CRITICAL: ":x:",
-    logging.ERROR: ":x:",
-    logging.WARNING: ":warning:",
-    logging.INFO: ":bell:",
-    logging.DEBUG: ":microscope:",
+    None: "",
+    logging.CRITICAL: "🆘",
+    logging.ERROR: "❌",
+    logging.WARNING: "⚠️",
+    logging.INFO: "",
+    logging.DEBUG: "",
 }
 
 
@@ -174,7 +166,7 @@ if __name__ == "__main__":
     stream_format = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     discord_format = logging.Formatter("%(message)s")
 
-    discord_handler = DiscordHandler("Happy Bot", webhook_url, emojis={}, avatar_url="https://i0.wp.com/www.theterminatorfans.com/wp-content/uploads/2012/09/the-terminator3.jpg?resize=900%2C450&ssl=1")
+    discord_handler = DiscordHandler("My server log example", webhook_url, emojis={}, avatar_url="https://i0.wp.com/www.theterminatorfans.com/wp-content/uploads/2012/09/the-terminator3.jpg?resize=900%2C450&ssl=1")
     #discord_handler = DiscordHandler("Happy Bot", webhook_url, emojis={})
     discord_handler.setFormatter(discord_format)
     stream_handler = logging.StreamHandler()
@@ -210,16 +202,22 @@ if __name__ == "__main__":
 
     logger.info("Line of text")
 
-
-
     logger.debug("Debug message %d %d", 1, 2)
     logger.info("Info message")
     logger.warning("Warning message")
     logger.error("Error message")
+
+    logger.info("Short info message with a link https://tradingstrategy.ai")
 
     try:
         raise RuntimeError("A bloody exception")
     except Exception as e:
         logger.exception(e)
 
-
+    # Switch to a handler with emojis
+    discord_handler_with_emojis = DiscordHandler("My server log example", webhook_url)
+    logger.removeHandler(discord_handler)
+    logger.addHandler(discord_handler_with_emojis)
+    logger.error("Error output with emojis")
+    logger.warning("Warning output with emojis")
+    logger.info("Info output with emojis")

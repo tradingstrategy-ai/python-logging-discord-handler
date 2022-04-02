@@ -23,6 +23,18 @@ API documentation
 
    discord_logging.handler
 
+Related work
+============
+
+See also other inspirations and sources
+
+- https://github.com/TrayserCassa/DiscordHandler/blob/master/discord_handler/DiscordHandler.py
+
+- https://pypi.org/project/discord-webhook/
+
+- https://github.com/chinnichaitanya/python-discord-logger/blob/master/discord_logger/message_logger.py
+
+
 Indices and tables
 ==================
 
