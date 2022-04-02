@@ -10,6 +10,11 @@ def log_examples(webhook_url: str):
 
     logger = logging.getLogger()
 
+    # Silence requests and discord_webhook internals as otherwise this example will be too noisy
+    logging.getLogger("requests").setLevel(logging.WARNING)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+    logging.getLogger("discord_webhook").setLevel(logging.FATAL)  # discord_webhook.webhook - ERROR - Webhook rate limited: sleeping for 0.235 seconds...
+
     stream_format = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     discord_format = logging.Formatter("%(message)s")
 
@@ -71,6 +76,11 @@ def log_examples(webhook_url: str):
     logger.error("Error output with emojis with long message $200,00 $200,00 $200,00 $200,00 $200,00 $200,00 $200,00 $200,00 $200,00 $200,00 $200,00 $200,00 $200,00 $200,00 $200,00 $200,00")
     logger.error("Error output with emojis\nmultiline")
 
+    # Switch to a handler one with a break character
+    discord_handler_with_emojis = DiscordHandler("My server log example", webhook_url, message_break_char="…")
+    logger.removeHandler(discord_handler)
+    logger.addHandler(discord_handler_with_emojis)
+    logger.info("Message 1 … Message 2 … Message 3")
 
 
 if __name__ == "__main__":

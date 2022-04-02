@@ -1,9 +1,7 @@
 """Python logging support for Discord."""
 import logging
-import os
 import sys
-import textwrap
-from typing import Optional
+from typing import Optional, List
 
 from discord_webhook import DiscordEmbed, DiscordWebhook
 
@@ -43,7 +41,8 @@ class DiscordHandler(logging.Handler):
                  emojis=DEFAULT_EMOJIS,
                  avatar_url: Optional[str]=None,
                  rate_limit_retry: bool=True,
-                 embed_line_wrap_threshold: int=60):
+                 embed_line_wrap_threshold: int=60,
+                 message_break_char: Optional[str]=None):
         """
 
         :param service_name: Shows at the bot username in Discord.
@@ -56,6 +55,11 @@ class DiscordHandler(logging.Handler):
         :param rate_limit_retry: Try to recover when Discord server tells us to slow down
         :param embed_line_wrap_threshold:
             How many characters a text line can contain until we go to "long line" output format.
+        :param message_break_char:
+            If given, manually split log entry text to several Discord messages by this character.
+            Useful if your application output long custom messages.
+            For example, you can use ellipsis `…` in your log message to split in several Discord
+            messages to overcome the 2000 character limitation.
         """
 
         logging.Handler.__init__(self)
@@ -67,6 +71,7 @@ class DiscordHandler(logging.Handler):
         self.avatar_url = avatar_url
         self.reentry_barrier = False
         self.embed_line_wrap_threshold = embed_line_wrap_threshold
+        self.message_break_char = message_break_char
 
     def should_format_as_code_block(self, record: logging.LogRecord, msg: str) -> bool:
         """Figure out whether we want to use code block formatting in Discord.
@@ -93,6 +98,17 @@ class DiscordHandler(logging.Handler):
         else:
             return content
 
+    def split_by_break_character(self, content: str) -> List[str]:
+        """Split the inbound log message to several Discord messages.
+
+        Uses manual break character method if set. If not set,
+        then do nothing.
+        """
+        if self.message_break_char:
+            return content.split(self.message_break_char)
+        else:
+            return [content]
+
     def emit(self, record: logging.LogRecord):
         """Send a log entry to Discord."""
 
@@ -106,55 +122,66 @@ class DiscordHandler(logging.Handler):
 
         try:
 
-            discord = DiscordWebhook(
-                url=self.webhook_url,
-                username=self.service_name,
-                rate_limit_retry=self.rate_limit_retry,
-                avatar_url=self.avatar_url,
-            )
-
             # About the Embed footer trick
             # https://stackoverflow.com/a/65543555/315168
 
             try:
-                msg = self.format(record)
+                # Run internal log message formatting that will expand %s, %d and such
+                inbound_msg = self.format(record)
 
+                # Choose colour and emoji for this log record
                 colour = self.colours.get(record.levelno) or self.colours[None]
-                emoji = self.emojis.get(record.levelno)
+                emoji = self.emojis.get(record.levelno, "")
                 if emoji:
                     # Add some space before the next char
                     emoji += " "
 
-                # discord.content = msg
-                if self.should_format_as_code_block(record, msg):
+                split_msgs = self.split_by_break_character(inbound_msg)
 
-                    try:
-                        first, remainder = msg.split("\n", maxsplit=1)
-                    except ValueError:
-                        first = msg
-                        remainder = ""
+                for msg in split_msgs:
 
-                    max_line_length = max([len(l) for l in msg.split("\n")])
-                    clipped = self.clip_content(remainder)
+                    # Start preparing the webhook payload for this messgae
+                    discord = DiscordWebhook(
+                        url=self.webhook_url,
+                        username=self.service_name,
+                        rate_limit_retry=self.rate_limit_retry,
+                        avatar_url=self.avatar_url,
+                    )
 
-                    if max_line_length > self.embed_line_wrap_threshold:
-                        # msg_with_bold = f"**{first}**\n```{clipped}```"
-                        clipped_msg = self.clip_content(msg)
-                        discord.content = f"```{emoji}{clipped_msg}```"
+                    # Should we use Markdown code blocks for ths message?
+                    if self.should_format_as_code_block(record, msg):
+
+                        try:
+                            first, remainder = msg.split("\n", maxsplit=1)
+                        except ValueError:
+                            first = msg
+                            remainder = ""
+
+                        # Find our longest line lenght
+                        max_line_length = max([len(l) for l in msg.split("\n")])
+
+                        # Truncate the message to its last 2000 chars / bottom lines
+                        clipped = self.clip_content(remainder)
+
+                        if max_line_length > self.embed_line_wrap_threshold:
+                            # We have long lines, need to use Markdown
+                            clipped_msg = self.clip_content(msg)
+                            discord.content = f"```{emoji}{clipped_msg}```"
+                        else:
+                            # We have a clipped content, but short lines
+                            embed = DiscordEmbed(title=f"{emoji}{first}", description=clipped, color=colour)
+                            discord.add_embed(embed)
+
                     else:
-                        embed = DiscordEmbed(title=f"{emoji}{first}", description=clipped, color=colour)
+                        # This message should be straight forward
+                        if emoji:
+                            title = f"{emoji}{msg}"
+                        else:
+                            title = msg
+                        embed = DiscordEmbed(title=title, color=colour)
                         discord.add_embed(embed)
 
-                else:
-                    # discord.content = content
-                    if emoji:
-                        title = f"{emoji}{msg}"
-                    else:
-                        title = msg
-                    embed = DiscordEmbed(title=title, color=colour)
-                    discord.add_embed(embed)
-
-                discord.execute()
+                    discord.execute()
 
             except Exception as e:
                 # We cannot use handleError here, because Discord request may cause
@@ -165,5 +192,3 @@ class DiscordHandler(logging.Handler):
                 self.handleError(record)
         finally:
             self.reentry_barrier = False
-
-
