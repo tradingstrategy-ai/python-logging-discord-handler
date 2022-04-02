@@ -1,12 +1,16 @@
 [tool.poetry]
 name = "python-logging-discord-handler"
-version = "0.1.0"
+version = "0.1.1"
 description = "Direct Python log output to Discord"
 authors = ["Mikko Ohtamaa <mikko@opensourcehacker.com>"]
 license = "MIT"
 packages = [
     { include = "discord_logging" },
 ]
+homepage = "https://tradingstrategy.ai"
+repository = "https://github.com/tradingstrategy-ai/python-logging-discord-handler"
+readme = "README.md"
+keywords = ["discord", "logger", "logging"]
 
 [tool.poetry.dependencies]
 python = "^3.8"

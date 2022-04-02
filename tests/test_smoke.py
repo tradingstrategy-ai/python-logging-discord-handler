@@ -3,12 +3,10 @@
 Because most interaction happens with Discord any case, there is little automated testing we can do.
 """
 
-import logging
 from typing import Optional
 from urllib.request import Request
 
 from discord_logging.examples import log_examples
-from discord_logging.handler import DiscordHandler
 import requests_mock
 
 

@@ -29,6 +29,20 @@ Redirect your Python log output to Discord using [Python logging subsystem](http
 
 - Python 3.8+
 
+# Installation 
+
+[With pip](https://pypi.org/project/pip/):
+
+```shell
+pip install python-logging-discord-handler
+```
+
+[With Poetry](https://python-poetry.org/):
+
+```shell
+poetry add python-logging-discord-handler
+```
+
 # Usage
 
 This example logs both to Discord and standard output. 
