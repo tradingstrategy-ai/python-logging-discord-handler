@@ -12,6 +12,7 @@ Redirect your Python log output to Discord using [Python logging subsystem](http
 
 # Use cases
 
+- Easily share logs with non-technical colleagues
 - Get notified on server-side errors
 - Follow your batch job processes easily
 - Good for businesses and communities that have their messaging set up in Discord 
