@@ -23,7 +23,7 @@ Redirect your Python log output to Discord using [Python logging subsystem](http
 - Optional color coding of messages using [Discord embeds](https://discordjs.guide/popular-topics/embeds.html#embed-preview)
 - Optional emoticons on messages using Unicode
 - Discord rate limiting friendly for burst of logs
-- Documentation
+- [Documentation](https://python-logging-discord-handler.readthedocs.io/)
 - Special handling for long log messages like tracebacks to deal with Discord's 2000 character max message length
 
 # Requirements
