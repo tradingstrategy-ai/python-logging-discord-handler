@@ -42,7 +42,8 @@ class DiscordHandler(logging.Handler):
                  avatar_url: Optional[str]=None,
                  rate_limit_retry: bool=True,
                  embed_line_wrap_threshold: int=60,
-                 message_break_char: Optional[str]=None):
+                 message_break_char: Optional[str]=None,
+                 discord_timeout: float=5.0):
         """
 
         :param service_name: Shows at the bot username in Discord.
@@ -60,6 +61,8 @@ class DiscordHandler(logging.Handler):
             Useful if your application output long custom messages.
             For example, you can use ellipsis `…` in your log message to split in several Discord
             messages to overcome the 2000 character limitation.
+        :param discord_timeout:
+            How many seconds to wait before giving up on Discord request.
         """
 
         logging.Handler.__init__(self)
@@ -72,6 +75,7 @@ class DiscordHandler(logging.Handler):
         self.reentry_barrier = False
         self.embed_line_wrap_threshold = embed_line_wrap_threshold
         self.message_break_char = message_break_char
+        self.discord_timeout = discord_timeout
 
     def should_format_as_code_block(self, record: logging.LogRecord, msg: str) -> bool:
         """Figure out whether we want to use code block formatting in Discord.
@@ -146,6 +150,7 @@ class DiscordHandler(logging.Handler):
                         username=self.service_name,
                         rate_limit_retry=self.rate_limit_retry,
                         avatar_url=self.avatar_url,
+                        timeout=self.discord_timeout,
                     )
 
                     # Should we use Markdown code blocks for ths message?

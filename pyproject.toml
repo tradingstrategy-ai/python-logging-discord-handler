@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "python-logging-discord-handler"
-version = "0.1.1"
+version = "0.1.2"
 description = "Direct Python log output to Discord"
 authors = ["Mikko Ohtamaa <mikko@opensourcehacker.com>"]
 license = "MIT"
