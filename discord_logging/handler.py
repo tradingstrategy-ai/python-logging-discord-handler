@@ -6,6 +6,8 @@ from typing import Optional, List
 from discord_webhook import DiscordEmbed, DiscordWebhook
 
 #: The default log level colors as hexacimal, converted int
+from requests import Response
+
 DEFAULT_COLOURS = {
     None: 2040357,  # Unknown log level
     logging.CRITICAL: 14362664,  # Red
@@ -113,6 +115,29 @@ class DiscordHandler(logging.Handler):
         else:
             return [content]
 
+    def attempt_to_report_failure(self, resp: Response, orignal: DiscordWebhook):
+        """Attempt to report a failure to deliver a log message.
+
+        Usually this happens if we pass content to Discord the server does not like.
+
+        More information
+
+        - https://stackoverflow.com/questions/53935198/in-my-discord-webhook-i-am-getting-the-error-embeds-0
+        """
+        # Output to the stderr, as it is not safe to use logging here
+        #
+        print(f"Discord webhook request failed: {resp.status_code}: {resp.content}. Payload content was: {orignal.content}, embeds: {orignal.embeds}", file=sys.stderr)
+        # Attempt to warn user about log failure
+        discord = DiscordWebhook(
+            url=self.webhook_url,
+            username=self.service_name,
+            rate_limit_retry=self.rate_limit_retry,
+            avatar_url=self.avatar_url,
+            timeout=self.discord_timeout,
+        )
+        discord.content = f"Failed to deliver log message: {resp.status_code}: {resp.content}"
+        discord.execute()
+
     def emit(self, record: logging.LogRecord):
         """Send a log entry to Discord."""
 
@@ -143,6 +168,10 @@ class DiscordHandler(logging.Handler):
                 split_msgs = self.split_by_break_character(inbound_msg)
 
                 for msg in split_msgs:
+
+                    if not msg:
+                        # Don't attempt to deliver empty messages
+                        continue
 
                     # Start preparing the webhook payload for this messgae
                     discord = DiscordWebhook(
@@ -186,7 +215,12 @@ class DiscordHandler(logging.Handler):
                         embed = DiscordEmbed(title=title, color=colour)
                         discord.add_embed(embed)
 
-                    discord.execute()
+                    # Can be one or list of responses,
+                    #  bad API design
+                    resp = discord.execute()
+                    assert isinstance(resp, Response), f"Discord webhook replies: {resp}"
+                    if resp.status_code != 200:
+                        self.attempt_to_report_failure(resp, discord)
 
             except Exception as e:
                 # We cannot use handleError here, because Discord request may cause
