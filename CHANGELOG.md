@@ -1,3 +1,7 @@
+# 0.1.4
+
+- Update to `discord-webhook` version 1.0.0 
+
 # 0.1.3
 
 - More error diagnostics output in the case of Discord server rejects our message 
