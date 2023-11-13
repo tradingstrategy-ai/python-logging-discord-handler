@@ -1,6 +1,7 @@
 """Python logging support for Discord."""
 import logging
 import sys
+import threading
 from typing import Optional, List
 
 from discord_webhook import DiscordEmbed, DiscordWebhook
@@ -45,7 +46,7 @@ class DiscordHandler(logging.Handler):
                  rate_limit_retry: bool=True,
                  embed_line_wrap_threshold: int=60,
                  message_break_char: Optional[str]=None,
-                 discord_timeout: float=5.0):
+                 discord_timeout: float=10.0):
         """
 
         :param service_name: Shows at the bot username in Discord.
@@ -138,6 +139,21 @@ class DiscordHandler(logging.Handler):
         discord.content = f"Failed to deliver log message: {resp.status_code}: {resp.content}"
         discord.execute()
 
+    def send_webhook_async(self, discord, record):
+        try:
+            thread_id = getattr(record, 'thread_id', None)
+            thread_name = getattr(record, 'thread_name', None)
+            discord.thread_id = thread_id
+            discord.thread_name = thread_name
+
+            resp = discord.execute()
+            assert isinstance(resp, Response), f"Discord webhook replies: {resp}"
+            if resp.status_code != 200:
+                self.attempt_to_report_failure(resp, discord)
+        except Exception as e:
+            print(f"Error from Discord logger {e}", file=sys.stderr)
+            self.handleError(record)
+
     def emit(self, record: logging.LogRecord):
         """Send a log entry to Discord."""
 
@@ -215,12 +231,8 @@ class DiscordHandler(logging.Handler):
                         embed = DiscordEmbed(title=title, color=colour)
                         discord.add_embed(embed)
 
-                    # Can be one or list of responses,
-                    #  bad API design
-                    resp = discord.execute()
-                    assert isinstance(resp, Response), f"Discord webhook replies: {resp}"
-                    if resp.status_code != 200:
-                        self.attempt_to_report_failure(resp, discord)
+                    webhook_thread = threading.Thread(target=self.send_webhook_async, args=(discord, record))
+                    webhook_thread.start()
 
             except Exception as e:
                 # We cannot use handleError here, because Discord request may cause
