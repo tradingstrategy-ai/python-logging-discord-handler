@@ -115,7 +115,7 @@ class DiscordHandler(logging.Handler):
         else:
             return [content]
 
-    def attempt_to_report_failure(self, resp: Response, orignal: DiscordWebhook):
+    def attempt_to_report_failure(self, resp: Response, original: DiscordWebhook):
         """Attempt to report a failure to deliver a log message.
 
         Usually this happens if we pass content to Discord the server does not like.
@@ -126,7 +126,7 @@ class DiscordHandler(logging.Handler):
         """
         # Output to the stderr, as it is not safe to use logging here
         #
-        print(f"Discord webhook request failed: {resp.status_code}: {resp.content}. Payload content was: {orignal.content}, embeds: {orignal.embeds}", file=sys.stderr)
+        print(f"Discord webhook request failed: {resp.status_code}: {resp.content}. Payload content was: {original.content}, embeds: {original.embeds}", file=sys.stderr)
         # Attempt to warn user about log failure
         discord = DiscordWebhook(
             url=self.webhook_url,
@@ -219,7 +219,12 @@ class DiscordHandler(logging.Handler):
                     #  bad API design
                     resp = discord.execute()
                     assert isinstance(resp, Response), f"Discord webhook replies: {resp}"
-                    if resp.status_code != 200:
+
+                    # 429 is rate limit status code
+                    # if the request is retried, it would also log another error, which creates 
+                    # infinite loop of rate limit
+                    # https://github.com/lovvskillz/python-discord-webhook/blob/64e5fd52c8d171442762a793c224d983a4202251/discord_webhook/webhook.py#L417-L419
+                    if resp.status_code not in [200, 204, 429]:
                         self.attempt_to_report_failure(resp, discord)
 
             except Exception as e:
